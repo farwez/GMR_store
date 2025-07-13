@@ -173,7 +173,7 @@ def login_page():
 
 # --- Stock Entry ---
 def stock_entry():
-    st.subheader("📦 Add Stock")
+    st.title("📦 Add Stock")
     with st.form("stock_form", clear_on_submit=True):
         item = st.text_input("Item")
         qty = st.number_input("Quantity", min_value=1, step=1)
@@ -213,7 +213,7 @@ def stock_entry():
 
 # --- Sales Entry ---
 def sales_entry():
-    st.subheader("💰 Record Sale")
+    st.title("💰 Record Sale")
     with st.form("sales_form", clear_on_submit=True):
         item = st.text_input("Item Name")
         qty = st.number_input("Quantity", min_value=1, step=1)
@@ -255,43 +255,90 @@ def sales_entry():
 
 # --- Dashboard ---
 def dashboard():
-    st.title("📊 GMR Dashboard")
-
-    lottie = load_lottie_url("https://assets5.lottiefiles.com/packages/lf20_gx7zlvxz.json")
-    if lottie:
-        st_lottie(lottie, height=180)
+    st.title("🎆 Welcome to GMR Fire Works Dashboard")
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
 
-    col1, col2, col3 = st.columns(3)
+    # Responsive columns for mobile
+    if st.session_state.get("is_mobile", False):
+        col1 = st.container()
+        col2 = st.container()
+        col3 = st.container()
+    else:
+        col1, col2, col3 = st.columns(3)
 
+    # Lottie animation for dashboard
+    lottie_url = "https://assets10.lottiefiles.com/packages/lf20_5ngs2ksb.json"
+    lottie = load_lottie_url(lottie_url)
+    if lottie:
+        st_lottie(lottie, height=120, speed=1, key="dashboard_anim")
+
+    # Total Stock
     if stock:
         df = pd.DataFrame(stock, columns=["ID", "Item", "Qty", "Cost", "Supplier", "Date", "Deleted"])
         with col1:
             st.markdown("""
-<div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1);'>
-    <h3 style='margin-bottom:0; color:white;'>📦 Total Stock</h3>
-    <h2 style='color:#f97316;'>""" + str(df["Qty"].sum()) + """</h2>
+<div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:1rem;'>
+    <h3 style='margin-bottom:0; color:white; font-size:20px;'>📦 Total Stock</h3>
+    <h2 style='color:#f97316; font-size:28px;'>{}</h2>
+    <p style='color:#f5f5f5; font-size:14px;'>Items in inventory</p>
 </div>
-""", unsafe_allow_html=True)
+""".format(df["Qty"].sum()), unsafe_allow_html=True)
 
+    # Low Stock Items
     with col2:
+        low_stock = stock_manager.get_low_stock()
         st.markdown("""
-            <div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1);'>
-                <h3 style='margin-bottom:0; color:white;'>⚠️ Low Stock Items</h3>
-                <h2 style='color:#ff6b6b;'>""" + str(len(stock_manager.get_low_stock())) + """</h2>
-            </div>
-            """, unsafe_allow_html=True)
+<div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:1rem;'>
+    <h3 style='margin-bottom:0; color:white; font-size:20px;'>⚠️ Low Stock Items</h3>
+    <h2 style='color:#ff6b6b; font-size:28px;'>{}</h2>
+    <p style='color:#f5f5f5; font-size:14px;'>Items below threshold</p>
+</div>
+""".format(len(low_stock)), unsafe_allow_html=True)
+
+    # Total Sales
     if sales:
         sdf = pd.DataFrame(sales, columns=["ID", "Item", "Qty", "Price", "Total", "Customer", "Date", "User", "Deleted"])
         with col3:
             st.markdown("""
-    <div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1);'>
-        <h3 style='margin-bottom:0; color:white;'>💸 Total Sales</h3>
-        <h2 style='color:#4ade80;'>₹""" + f"{sdf['Total'].sum():.2f}" + """</h2>
-    </div>
-    """, unsafe_allow_html=True)
+<div style='padding:1rem; background:#1e3a8a; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); margin-bottom:1rem;'>
+    <h3 style='margin-bottom:0; color:white; font-size:20px;'>💸 Total Sales</h3>
+    <h2 style='color:#4ade80; font-size:28px;'>₹{:.2f}</h2>
+    <p style='color:#f5f5f5; font-size:14px;'>Sales revenue</p>
+</div>
+""".format(sdf['Total'].sum()), unsafe_allow_html=True)
+
+    # Recent Sales Table
+    st.markdown("### 🕒 Recent Sales")
+    if sales:
+        recent_sales = sdf.sort_values("Date", ascending=False).head(5)
+        st.dataframe(recent_sales[["Item", "Qty", "Total", "Customer", "Date"]], use_container_width=True, height=250)
+    else:
+        st.info("No sales records yet.")
+
+    # Stock Trends
+    st.markdown("### 📈 Stock Trends")
+    if stock:
+        trend_df = df.groupby("Date")["Qty"].sum().reset_index()
+        st.line_chart(trend_df.rename(columns={"Date": "Stock Date", "Qty": "Total Qty"}).set_index("Stock Date"))
+    else:
+        st.info("No stock data to show trends.")
+
+    # Mobile detection JS injection (sets st.session_state.is_mobile)
+    st.markdown("""
+<script>
+const setMobile = () => {
+    if (window.innerWidth < 768) {
+        window.parent.postMessage({type: 'streamlit:setSessionState', key: 'is_mobile', value: true}, '*');
+    } else {
+        window.parent.postMessage({type: 'streamlit:setSessionState', key: 'is_mobile', value: false}, '*');
+    }
+};
+window.addEventListener('resize', setMobile);
+setMobile();
+</script>
+""", unsafe_allow_html=True)
 
 
 # --- Reports Page ---
