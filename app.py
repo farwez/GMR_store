@@ -257,9 +257,12 @@ def sales_entry():
 def dashboard():
     st.title("📊 GMR FIRE WORKS ")
 
-    lottie = load_lottie_url("https://lottie.host/7b92faeb-7ed6-44ab-bdc9-5db339022b2f/ZPds1tJzTV.json")
-    if lottie:
-        st_lottie(lottie, height=180)
+    lottie = load_lottie_url("https://lottie.host/5c3eb699-60e2-47f3-a9f5-007c6e0f149b/YxM5tkkkGV.json")
+if lottie:
+    st_lottie(lottie, height=300)
+else:
+    st.warning("Animation failed to load.")
+
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
