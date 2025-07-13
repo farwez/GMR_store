@@ -16,19 +16,11 @@ import requests
 
 from datetime import datetime
 
-def load_lottie_url(url: str):
-    try:
-        r = requests.get(url)
-        if r.status_code != 200:
-            print(f"Failed to fetch Lottie JSON: {r.status_code}")
-            return None
-        return r.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
         return None
-    except ValueError as ve:
-        print(f"Invalid JSON: {ve}")
-        return None
+    return r.json()
 
 
 # --- Setup ---
@@ -263,14 +255,11 @@ def sales_entry():
 
 # --- Dashboard ---
 def dashboard():
-    st.title("📊 GMR FIRE WORKS ")
+    st.title("📊 GMR Dashboard")
 
-    lottie = load_lottie_url("https://lottie.host/5c3eb699-60e2-47f3-a9f5-007c6e0f149b/YxM5tkkkGV.json")
-if lottie:
-    st_lottie(lottie, height=300)
-else:
-    st.warning("Animation failed to load.")
-
+    lottie = load_lottie_url("https://assets5.lottiefiles.com/packages/lf20_gx7zlvxz.json")
+    if lottie:
+        st_lottie(lottie, height=180)
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
@@ -387,7 +376,7 @@ if not st.session_state.logged_in:
 else:
     st.sidebar.title("Navigation")
     st.sidebar.write(f"👤 {st.session_state.username} ({st.session_state.role})")
-    opt = st.sidebar.radio("Go to", ["Dashboard", "Stock Entry", "Sales", "Reports", "Stock Report", "History"])
+    opt = st.sidebar.radio("Go to", ["Dashboard", "Stock", "Sales", "Reports", "Stock Report", "History"])
     if st.sidebar.button("Logout"):
         session.logout()
         st.rerun()
