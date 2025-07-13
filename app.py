@@ -16,11 +16,19 @@ import requests
 
 from datetime import datetime
 
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
+def load_lottie_url(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            print(f"Failed to fetch Lottie JSON: {r.status_code}")
+            return None
+        return r.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Request error: {e}")
         return None
-    return r.json()
+    except ValueError as ve:
+        print(f"Invalid JSON: {ve}")
+        return None
 
 
 # --- Setup ---
