@@ -255,11 +255,11 @@ def sales_entry():
 
 # --- Dashboard ---
 def dashboard():
-    st.title("📊 GMR Dashboard")
+    st.title("📊 GMR FIRE WORKS ")
 
-    lottie = load_lottie_url("https://assets5.lottiefiles.com/packages/lf20_gx7zlvxz.json")
+    lottie = load_lottie_url("blob:https://app.lottiefiles.com/35535ae1-f7bb-4967-9650-44b0980544f1")
     if lottie:
-        st_lottie(lottie, height=180)
+        st_lottie(lottie, height=200)
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
@@ -376,7 +376,7 @@ if not st.session_state.logged_in:
 else:
     st.sidebar.title("Navigation")
     st.sidebar.write(f"👤 {st.session_state.username} ({st.session_state.role})")
-    opt = st.sidebar.radio("Go to", ["Dashboard", "Stock", "Sales", "Reports", "Stock Report", "History"])
+    opt = st.sidebar.radio("Go to", ["Dashboard", "Stock Entry", "Sales", "Reports", "Stock Report", "History"])
     if st.sidebar.button("Logout"):
         session.logout()
         st.rerun()
