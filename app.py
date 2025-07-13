@@ -257,7 +257,7 @@ def sales_entry():
 def dashboard():
     st.title("📊 GMR FIRE WORKS ")
 
-    lottie = load_lottie_url("blob:https://app.lottiefiles.com/35535ae1-f7bb-4967-9650-44b0980544f1")
+    lottie = load_lottie_url("https://app.lottiefiles.com/animation/cc6bc4b2-70a8-4cfd-aafa-f76f08083d11")
     if lottie:
         st_lottie(lottie, height=200)
 
