@@ -280,7 +280,8 @@ def sales_entry():
 
 # --- Dashboard ---
 def dashboard():
-    st.title("🎆 Welcome to GMR FireWorks")
+    st.title("🎆 Welcome to 
+        GMR FireWorks")
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
