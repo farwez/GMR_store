@@ -163,7 +163,7 @@ def login_page():
         new_user = st.text_input("New Username")
         new_pwd = st.text_input("New Password", type='password')
         role = st.selectbox("Select Role", ["admin", "staff"])
-        if st.button("✅ Register"):
+        if st.button("✅ Registered"):
             try:
                 add_user(new_user, new_pwd, role)
                 st.success("🎉 Registered successfully")
@@ -211,26 +211,46 @@ def stock_entry():
                 st.success(f"Restored Stock ID {restore_id}")
                 st.rerun()
 
-# --- Sales Entry ---
-def sales_entry():
+def sales_entry(): 
     st.title("💰 Record Sale")
+
+    # ------------------- Record Sale Form -------------------
     with st.form("sales_form", clear_on_submit=True):
         item = st.text_input("Item Name")
         qty = st.number_input("Quantity", min_value=1, step=1)
         price = st.number_input("Selling Price", min_value=0.0)
         customer = st.text_input("Customer")
         d = st.date_input("Date", value=date.today())
+
         if st.form_submit_button("Record Sale"):
-            sales_manager.add_sale(item, qty, price, customer, d.strftime("%Y-%m-%d"), session.session.username)
+            sales_manager.add_sale(
+                item, qty, price, customer,
+                d.strftime("%Y-%m-%d"), session.session.username
+            )
             history_logger.log("SALE", item, qty, session.session.username)
             st.success("Sale recorded")
 
-    st.subheader("🧾 Sales Today")
-    today = date.today().strftime("%Y-%m-%d")
-    records = sales_manager.get_sales_by_date(today, today)
+    # ------------------- Sales Records Section -------------------
+    st.subheader("🧾 View & Manage Sales")
+
+    # Date range filter for viewing sales
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("Start Date", value=date.today())
+    with col2:
+        end_date = st.date_input("End Date", value=date.today())
+
+    # Fetch sales for the selected range
+    records = sales_manager.get_sales_by_date(
+        start_date.strftime("%Y-%m-%d"),
+        end_date.strftime("%Y-%m-%d")
+    )
+
     if records:
         df = pd.DataFrame(records, columns=["ID", "Item", "Qty", "Price", "Total", "Customer", "Date", "User", "Deleted"])
         st.dataframe(df.drop(columns=["Deleted"]), use_container_width=True)
+
+        # Delete Sale by ID (works for any date)
         del_id = st.text_input("Enter Sale ID to delete")
         if del_id.isdigit() and st.button(f"🗑️ Confirm Delete Sale ID {del_id}"):
             sale = sales_manager.get_sale_by_id(int(del_id))
@@ -240,18 +260,23 @@ def sales_entry():
                 st.warning(f"Sale ID {del_id} moved to Trash")
                 st.rerun()
 
+        # ------------------- Deleted Sales Section -------------------
         with st.expander("🗃️ View Deleted Sales (Trash Bin)"):
             trash_sales = sales_manager.get_deleted_sales()
             if trash_sales:
                 df_trash_sales = pd.DataFrame(trash_sales, columns=["ID", "Item", "Qty", "Price", "Total", "Customer", "Date", "User", "Deleted"])
                 st.dataframe(df_trash_sales.drop(columns=["Deleted"]), use_container_width=True)
+
                 restore_id = st.text_input("Enter Sale ID to restore")
                 if restore_id.isdigit() and st.button("♻️ Restore Sale"):
                     sales_manager.restore_sale(int(restore_id))
                     st.success(f"Restored Sale ID {restore_id}")
                     st.rerun()
-    else:
-        st.info("No sales yet today")
+            else:
+                st.info("Trash Bin is empty")
+    else: 
+        st.info("No sales found for the selected date range")
+
 
 # --- Dashboard ---
 def dashboard():
