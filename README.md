@@ -34,7 +34,7 @@ LIVE VIEW:https://gmrstore-jglstore122344.streamlit.app/
 
 👉installation & Setup
 Clone this repository
-git clone https://github.com/yourusername/gmr-fireworks.git
+git clone https://github.com/farwez/gmr-fireworks.git
 cd gmr-fireworks
 
 Install dependencies
