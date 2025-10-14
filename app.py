@@ -3,35 +3,25 @@ from datetime import date
 import pandas as pd
 import os
 
-# Import Managers
 from models.stock import StockManager
 from models.sales import SalesManager
 from models.history import HistoryLogger
 from utils.session import SessionManager
 from auth import create_user_table, add_user, login_user, get_user_role
-
-# Optional: For Lottie Animations
 from streamlit_lottie import st_lottie
 import requests
-
 from datetime import datetime
-
 def load_lottie_url(url):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
-
-
-# --- Setup ---
 st.set_page_config(page_title="GMR Fire Works Store", layout="wide")
-
 st.markdown("""
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* Global Base */
+
 html, body, [class*="css"] {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 16px;
@@ -39,29 +29,22 @@ html, body, [class*="css"] {
     color: #f5f5f5;
 }
 
-/* Main Block Container */
 .block-container {
     padding: 1rem;
     max-width: 100%;
 }
 
-/* Card Style */
 .main {
     background-color: #1e3a8a;  /* Blue background for better contrast */
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.16);
 }
-
-
-/* Headings */
 h1, h2, h3 {
     color: #2196f3;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
-
-/* Buttons */
 button[kind="primary"] {
     background-color: #2196f3;
     color: white;
@@ -75,15 +58,11 @@ button[kind="primary"]:hover {
     background-color: #1565c0;
     transform: scale(1.02);
 }
-
-/* Input Fields */
 input, textarea, select {
     border-radius: 6px !important;
     border: 1px solid #ccc !important;
     padding: 8px !important;
 }
-
-/* DataFrame Styling */
 .stDataFrame {
     background-color: #ffffff;
     border-radius: 8px;
@@ -91,7 +70,6 @@ input, textarea, select {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* Mobile Responsiveness */
 @media only screen and (max-width: 768px) {
     .stButton>button,
     .stTextInput>div>div>input,
@@ -128,19 +106,14 @@ input, textarea, select {
 
 if not os.path.exists("data"):
     os.makedirs("data")
-
-# Instantiate managers
 stock_manager = StockManager()
 sales_manager = SalesManager()
 history_logger = HistoryLogger()
 session = SessionManager(st.session_state)
 create_user_table()
-
-# --- Auth Pages ---
 def login_page():
     st.title("🔐 GMR Fire Works Login")
 
-    # Load professional Lottie animation
     lottie = load_lottie_url("https://assets9.lottiefiles.com/packages/lf20_t9gkkhz4.json")
     if lottie:
         st_lottie(lottie, height=220, speed=1)
@@ -170,8 +143,6 @@ def login_page():
             except:
                 st.error("⚠️ Username already exists")
 
-
-# --- Stock Entry ---
 def stock_entry():
     st.title("📦 Add Stock")
     with st.form("stock_form", clear_on_submit=True):
@@ -213,8 +184,6 @@ def stock_entry():
 
 def sales_entry(): 
     st.title("💰 Record Sale")
-
-    # ------------------- Record Sale Form -------------------
     with st.form("sales_form", clear_on_submit=True):
         item = st.text_input("Item Name")
         qty = st.number_input("Quantity", min_value=1, step=1)
@@ -229,18 +198,14 @@ def sales_entry():
             )
             history_logger.log("SALE", item, qty, session.session.username)
             st.success("Sale recorded")
-
-    # ------------------- Sales Records Section -------------------
     st.subheader("🧾 View & Manage Sales")
 
-    # Date range filter for viewing sales
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input("Start Date", value=date.today())
     with col2:
         end_date = st.date_input("End Date", value=date.today())
 
-    # Fetch sales for the selected range
     records = sales_manager.get_sales_by_date(
         start_date.strftime("%Y-%m-%d"),
         end_date.strftime("%Y-%m-%d")
@@ -249,8 +214,6 @@ def sales_entry():
     if records:
         df = pd.DataFrame(records, columns=["ID", "Item", "Qty", "Price", "Total", "Customer", "Date", "User", "Deleted"])
         st.dataframe(df.drop(columns=["Deleted"]), use_container_width=True)
-
-        # Delete Sale by ID (works for any date)
         del_id = st.text_input("Enter Sale ID to delete")
         if del_id.isdigit() and st.button(f"🗑️ Confirm Delete Sale ID {del_id}"):
             sale = sales_manager.get_sale_by_id(int(del_id))
@@ -259,8 +222,6 @@ def sales_entry():
                 history_logger.log("SOFT_DELETE_SALE", sale[1], sale[2], session.session.username)
                 st.warning(f"Sale ID {del_id} moved to Trash")
                 st.rerun()
-
-        # ------------------- Deleted Sales Section -------------------
         with st.expander("🗃️ View Deleted Sales (Trash Bin)"):
             trash_sales = sales_manager.get_deleted_sales()
             if trash_sales:
@@ -277,29 +238,21 @@ def sales_entry():
     else: 
         st.info("No sales found for the selected date range")
 
-
-# --- Dashboard ---
 def dashboard():
     st.title("🎆GMR FireWorks Home")
 
     stock = stock_manager.get_all_stock()
     sales = sales_manager.get_sales()
-
-    # Responsive columns for mobile
     if st.session_state.get("is_mobile", False):
         col1 = st.container()
         col2 = st.container()
         col3 = st.container()
     else:
         col1, col2, col3 = st.columns(3)
-
-    # Lottie animation for dashboard
     lottie_url = "https://assets10.lottiefiles.com/packages/lf20_5ngs2ksb.json"
     lottie = load_lottie_url(lottie_url)
     if lottie:
         st_lottie(lottie, height=120, speed=1, key="dashboard_anim")
-
-    # Total Stock
     if stock:
         df = pd.DataFrame(stock, columns=["ID", "Item", "Qty", "Cost", "Supplier", "Date", "Deleted"])
         with col1:
@@ -310,8 +263,6 @@ def dashboard():
     <p style='color:#f5f5f5; font-size:14px;'>Items in inventory</p>
 </div>
 """.format(df["Qty"].sum()), unsafe_allow_html=True)
-
-    # Low Stock Items
     with col2:
         low_stock = stock_manager.get_low_stock()
         st.markdown("""
@@ -321,8 +272,6 @@ def dashboard():
     <p style='color:#f5f5f5; font-size:14px;'>Items below threshold</p>
 </div>
 """.format(len(low_stock)), unsafe_allow_html=True)
-
-    # Total Sales
     if sales:
         sdf = pd.DataFrame(sales, columns=["ID", "Item", "Qty", "Price", "Total", "Customer", "Date", "User", "Deleted"])
         with col3:
@@ -333,16 +282,12 @@ def dashboard():
     <p style='color:#f5f5f5; font-size:14px;'>Sales revenue</p>
 </div>
 """.format(sdf['Total'].sum()), unsafe_allow_html=True)
-
-    # Recent Sales Table
     st.markdown("### 🕒 Recent Sales")
     if sales:
         recent_sales = sdf.sort_values("Date", ascending=False).head(5)
         st.dataframe(recent_sales[["Item", "Qty", "Total", "Customer", "Date"]], use_container_width=True, height=250)
     else:
         st.info("No sales records yet.")
-
-    # Stock Trends
     st.markdown("### 📈 Stock Trends")
     if stock:
         trend_df = df.groupby("Date")["Qty"].sum().reset_index()
@@ -350,7 +295,6 @@ def dashboard():
     else:
         st.info("No stock data to show trends.")
 
-    # Mobile detection JS injection (sets st.session_state.is_mobile)
     st.markdown("""
 <script>
 const setMobile = () => {
@@ -365,8 +309,6 @@ setMobile();
 </script>
 """, unsafe_allow_html=True)
 
-
-# --- Reports Page ---
 def sales_reports_page():
     st.title("📆 Sales Report")
     from_date = st.date_input("From", value=date.today())
@@ -381,7 +323,7 @@ def sales_reports_page():
         st.success(f"Total Sales: ₹{df['Total'].sum():.2f}")
     else:
         st.info("No sales records for this period")
-# --- Stock Report Page ---
+
 def stock_report_page():
     st.title("📦 Stock Report")
 
@@ -409,15 +351,12 @@ def stock_report_page():
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download CSV", csv, "stock_report.csv", "text/csv")
 
-# --- History Page ---
 def history_page():
     if not session.is_admin():
         st.warning("Access Denied: Admins only")
         return
 
     st.title("📜 Action History Log")
-
-    # Date filter
     selected_date = st.date_input("Select Date to View History", value=date.today())
     selected_str = selected_date.strftime("%Y-%m-%d")
 
@@ -437,7 +376,6 @@ def history_page():
     else:
         st.info("No logs found")
 
-# --- App Layout ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
@@ -465,3 +403,4 @@ else:
         stock_report_page()
     elif opt == "History":
         history_page()
+
